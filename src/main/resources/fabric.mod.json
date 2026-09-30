@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "jev",
+	"version": "${version}",
+	"name": "Jev",
+	"description": "Client-side goal companion. Keyword goals run locally. An optional HTTP sidecar can override them later.",
+	"authors": [
+		"zolanerd"
+	],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.zolanerd.jev.client.JevClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

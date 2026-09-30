@@ -1,0 +1,44 @@
+# gradle
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+*.launch
+
+# idea
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+*.DS_Store
+
+# fabric / minecraft
+run/
+.minecraft/
+
+# java
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# python sidecar
+sidecar/.venv/
+sidecar/venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
