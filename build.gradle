@@ -10,7 +10,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"jev" {
+		"systemone_mc" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

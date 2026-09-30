@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "jev",
+	"id": "systemone_mc",
 	"version": "${version}",
-	"name": "Jev",
+	"name": "System One MC",
 	"description": "Client-side goal companion. Keyword goals run locally. An optional HTTP sidecar can override them later.",
 	"authors": [
 		"zolanerd"
@@ -11,7 +11,7 @@
 	"environment": "client",
 	"entrypoints": {
 		"client": [
-			"com.zolanerd.jev.client.JevClient"
+			"com.zolanerd.systemone_mc.client.SystemOneMcClient"
 		]
 	},
 	"depends": {

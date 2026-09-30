@@ -1,8 +1,8 @@
-# Jev
+# System One MC
 
-Client-only Fabric mod for Minecraft **1.21.1**. Jev follows keyword goals on your own client: protect, follow, build, idle, and survive. It moves by holding the normal movement keys and looking at targets. It does not teleport and it does not run on a dedicated server.
+Client-only Fabric mod for Minecraft **1.21.1**. System One MC follows keyword goals on your own client: protect, follow, build, idle, and survive. It moves by holding the normal movement keys and looking at targets. It does not teleport and it does not run on a dedicated server.
 
-An optional Python sidecar can later override a tick with a planner action. Until that planner is wired up, the sidecar (and any failed connection) returns `STOP`, and the keyword goals keep running. The HUD then shows **Jev: sidecar offline (dummy)** when the HTTP service cannot be reached.
+An optional Python sidecar can later override a tick with a planner action. Until that planner is wired up, the sidecar (and any failed connection) returns `STOP`, and the keyword goals keep running. The HUD then shows **System One MC: sidecar offline (dummy)** when the HTTP service cannot be reached.
 
 ## Requirements
 
@@ -21,20 +21,20 @@ Open PowerShell in this directory and run:
 The mod jar is written to:
 
 ```text
-build\libs\jev-1.0.0.jar
+build\libs\systemone-mc-1.0.0.jar
 ```
 
-Install that jar. Leave `jev-1.0.0-sources.jar` out of the mods folder.
+Install that jar. Leave `systemone-mc-1.0.0-sources.jar` out of the mods folder.
 
 Copy the jar into your mods folder:
 
 ```powershell
-Copy-Item build\libs\jev-1.0.0.jar "$env:APPDATA\.minecraft\mods\"
+Copy-Item build\libs\systemone-mc-1.0.0.jar "$env:APPDATA\.minecraft\mods\"
 ```
 
-Launch a Fabric 1.21.1 profile that also has Fabric API installed. The log line `Jev mod loaded` is written at INFO when the client starts.
+Launch a Fabric 1.21.1 profile that also has Fabric API installed. The log line `System One MC mod loaded` is written at INFO when the client starts.
 
-Linux and macOS use `./gradlew build`. The jar path is `build/libs/jev-1.0.0.jar`, and the mods folder is the `mods` directory of the instance you launch.
+Linux and macOS use `./gradlew build`. The jar path is `build/libs/systemone-mc-1.0.0.jar`, and the mods folder is the `mods` directory of the instance you launch.
 
 ## Controls
 
@@ -44,7 +44,7 @@ Linux and macOS use `./gradlew build`. The jar path is `build/libs/jev-1.0.0.jar
 | `K` | Toggle AI on or off |
 | `J` | Open settings |
 
-The key category in Controls is **Jev**.
+The key category in Controls is **System One MC**.
 
 The radial lists **protect**, **follow**, **build**, **idle**, and **survive**.
 
@@ -57,7 +57,7 @@ AI has to be on (`K`) before the goal tick runs. The tick is every 2 client tick
 
 ## Chat
 
-Lines that start with `.jev ` (any case) are handled on the client and are not sent to the server.
+Lines that start with `.jev ` (any case) are handled on the client and are not sent to the server. `.s1 ` is the same parser.
 
 ```text
 .jev protect Steve
@@ -73,6 +73,8 @@ Lines that start with `.jev ` (any case) are handled on the client and are not s
 .jev help
 ```
 
+The same commands work with `.s1 ` in place of `.jev ` (for example `.s1 protect Steve`).
+
 `follow` and `protect` with no name use the nearest other player in range.
 
 ## Sidecar
@@ -85,15 +87,16 @@ From `sidecar/`:
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python -m jev_sidecar
+python -m systemone_sidecar
 ```
 
 `POST /v1/systemone` accepts the observation JSON and, in this version, always returns `{"action":"STOP"}`. See `sidecar/README.md` for the action fields a future Laya / jevos planner can return (`MOVE_TO`, `LOOK_AT`, `ATTACK`, `USE_ITEM`, `PLACE_BLOCK`, `BREAK_BLOCK`, `JUMP`, `SNEAK`, `HOTBAR_SELECT`, `SAY`).
 
-While the service is down, keyword goals still run locally and the HUD shows `Jev: sidecar offline (dummy)`.
+While the service is down, keyword goals still run locally and the HUD shows `System One MC: sidecar offline (dummy)`.
 
 ## Layout
 
-- `src/client/java/com/zolanerd/jev/client` — client initializer, keybinds, radial menu, goals, observation JSON, action executor, HUD
-- `src/main` — mod id constants and `fabric.mod.json` (`environment` is `client`)
-- `sidecar/jev_sidecar` — FastAPI app
+- `src/client/java/com/zolanerd/systemone_mc/client` — client initializer, keybinds, radial menu, goals, observation JSON, action executor, HUD
+- `src/main/java/com/zolanerd/systemone_mc` — mod id constants (`SystemOneMc`) and `fabric.mod.json` (`environment` is `client`, id `systemone_mc`)
+- `src/main/resources/assets/systemone_mc` — keybind translations (`category.systemone_mc`, `key.systemone_mc.*`)
+- `sidecar/systemone_sidecar` — FastAPI app (`python -m systemone_sidecar`)
