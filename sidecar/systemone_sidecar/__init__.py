@@ -1,3 +1,3 @@
-"""System One MC HTTP sidecar. The bundled planner is a dummy that always returns STOP."""
+"""System One MC HTTP sidecar. Local LLM planner with rule fallback."""
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

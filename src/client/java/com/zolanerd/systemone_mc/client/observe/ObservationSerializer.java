@@ -61,6 +61,9 @@ public final class ObservationSerializer {
 			json.append('{');
 			str(json, "name", other.getScoreboardName(), true);
 			num(json, "dist", other.distanceTo(player), false);
+			num(json, "x", other.getX(), false);
+			num(json, "y", other.getY(), false);
+			num(json, "z", other.getZ(), false);
 			json.append('}');
 		}
 		json.append("],\"entities\":[");
@@ -100,7 +103,11 @@ public final class ObservationSerializer {
 			String type = id == null ? "entity" : id.getPath();
 			json.append('{');
 			str(json, "type", type, true);
+			str(json, "id", entity.getStringUUID(), false);
 			num(json, "dist", entity.distanceTo(player), false);
+			num(json, "x", entity.getX(), false);
+			num(json, "y", entity.getY(), false);
+			num(json, "z", entity.getZ(), false);
 			json.append('}');
 		}
 	}

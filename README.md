@@ -2,7 +2,7 @@
 
 Client-only Fabric mod for Minecraft **1.21.1**. System One MC follows keyword goals on your own client: protect, follow, build, idle, and survive. It moves by holding the normal movement keys and looking at targets. It does not teleport and it does not run on a dedicated server.
 
-An optional Python sidecar can later override a tick with a planner action. Until that planner is wired up, the sidecar (and any failed connection) returns `STOP`, and the keyword goals keep running. The HUD then shows **System One MC: sidecar offline (dummy)** when the HTTP service cannot be reached.
+An optional Python sidecar overrides a tick with a planner action. The sidecar’s **primary brain is a local LLM** (Ollama / OpenAI-compatible on localhost) with a thin rule fallback when the model is down. `STOP` (or a failed connection) leaves the Java keyword goals running. The HUD shows **System One MC: sidecar offline (dummy)** when the HTTP service cannot be reached.
 
 ## Requirements
 
@@ -90,7 +90,7 @@ pip install -r requirements.txt
 python -m systemone_sidecar
 ```
 
-`POST /v1/systemone` accepts the observation JSON and, in this version, always returns `{"action":"STOP"}`. See `sidecar/README.md` for the action fields a future Laya / jevos planner can return (`MOVE_TO`, `LOOK_AT`, `ATTACK`, `USE_ITEM`, `PLACE_BLOCK`, `BREAK_BLOCK`, `JUMP`, `SNEAK`, `HOTBAR_SELECT`, `SAY`).
+`POST /v1/systemone` accepts observation JSON and returns one action. The sidecar asks local Ollama (default `http://127.0.0.1:11434/v1`) first; rules run if the LLM fails. Point the in-game settings address at the **sidecar** (`http://127.0.0.1:8765`), not at Ollama directly. See `sidecar/README.md` for env vars and action shapes.
 
 While the service is down, keyword goals still run locally and the HUD shows `System One MC: sidecar offline (dummy)`.
 

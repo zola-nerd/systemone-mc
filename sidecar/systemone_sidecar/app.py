@@ -1,43 +1,50 @@
 """System One MC sidecar.
 
 The Minecraft client POSTs a compact observation JSON to ``/v1/systemone``.
-This build is a dummy planner: it always returns ``{"action": "STOP"}``.
+Primary planner: local OpenAI-compatible LLM (Ollama by default). Thin
+rule-based fallback when the model is off, unreachable, times out, or returns
+invalid JSON.
 
-Keyword goals (protect, follow, build, idle, survive, stop) are matched on
-the Java client first. This endpoint is the later hook for an LLM planner.
+Env:
+  SYSTEMONE_LLM=ollama|openai|off   (default ollama)
+  SYSTEMONE_BASE_URL                (default http://127.0.0.1:11434/v1)
+  SYSTEMONE_MODEL                   (default llama3.2:3b)
+  SYSTEMONE_API_KEY                 (optional; default "ollama")
+  SYSTEMONE_LLM_TIMEOUT             (seconds; default 2.5)
 
-Plug-in point for Laya, jevos, or another planner: replace ``plan`` with a
-function that reads the observation and returns one action object. Supported
-``action`` values:
-
-    STOP, MOVE_TO, LOOK_AT, ATTACK, USE_ITEM, PLACE_BLOCK,
-    BREAK_BLOCK, JUMP, SNEAK, HOTBAR_SELECT, SAY
-
-Examples the Java executor already understands::
-
-    {"action": "STOP"}
-    {"action": "MOVE_TO", "x": 0, "y": 64, "z": 0, "sprint": false}
-    {"action": "LOOK_AT", "x": 0, "y": 64, "z": 0}
-    {"action": "ATTACK", "target": "<uuid-or-name>"}
-    {"action": "USE_ITEM", "slot": 0}
-    {"action": "PLACE_BLOCK", "x": 0, "y": 64, "z": 0}
-    {"action": "BREAK_BLOCK", "x": 0, "y": 64, "z": 0}
-    {"action": "JUMP"}
-    {"action": "SNEAK", "enabled": true}
-    {"action": "HOTBAR_SELECT", "slot": 3}
-    {"action": "SAY", "message": "hello"}
-
-A STOP response means "no override". The Java keyword planner keeps running.
+STOP = no override (Java keyword plan keeps running). Other actions override.
 """
+
+from __future__ import annotations
 
 from fastapi import FastAPI
 
-app = FastAPI(title="System One MC sidecar", version="1.0.0")
+from .llm import llm_config, plan_llm, probe_llm
+from .rules import plan_rules
+
+app = FastAPI(title="System One MC sidecar", version="1.1.0")
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "planner": "dummy"}
+    cfg = llm_config()
+    probe = probe_llm()
+    if cfg["mode"] == "off":
+        planner = "rules"
+    elif probe.get("reachable"):
+        planner = "llm+rules"
+    else:
+        planner = "rules"  # LLM configured but down — fallback active
+    return {
+        "ok": True,
+        "planner": planner,
+        "llm": {
+            "mode": cfg["mode"],
+            "base_url": cfg["base_url"],
+            "model": cfg["model"],
+            "reachable": bool(probe.get("reachable")),
+        },
+    }
 
 
 @app.post("/v1/systemone")
@@ -46,7 +53,10 @@ def systemone(observation: dict) -> dict:
 
 
 def plan(observation: dict) -> dict:
-    # Dummy planner. Keep the observation referenced so a future Laya / jevos
-    # hook has an obvious place to read player, goal, entities, and inventory.
-    _ = observation
-    return {"action": "STOP"}
+    """LLM first; rules if LLM off/fails/invalid."""
+    if not isinstance(observation, dict):
+        observation = {}
+    llm_action = plan_llm(observation)
+    if llm_action is not None:
+        return llm_action
+    return plan_rules(observation)
