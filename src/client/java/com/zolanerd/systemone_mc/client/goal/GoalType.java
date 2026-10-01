@@ -6,7 +6,9 @@ public enum GoalType {
 	FOLLOW,
 	BUILD,
 	IDLE,
-	SURVIVE;
+	SURVIVE,
+	FIGHT,
+	DIG;
 
 	public String id() {
 		return name().toLowerCase(java.util.Locale.ROOT);
@@ -22,6 +24,8 @@ public enum GoalType {
 			case "build" -> BUILD;
 			case "idle" -> IDLE;
 			case "survive" -> SURVIVE;
+			case "fight" -> FIGHT;
+			case "dig" -> DIG;
 			case "stop", "none" -> NONE;
 			default -> null;
 		};

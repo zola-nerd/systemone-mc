@@ -9,9 +9,14 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Keyword goal planner. Runs on the client before the sidecar is consulted.
@@ -19,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class GoalPlanner {
 	private static final double PLACE_REACH = 3.6;
+	private static final int DIG_LENGTH = 8;
 
 	private GoalPlanner() {
 	}
@@ -34,7 +40,95 @@ public final class GoalPlanner {
 			case FOLLOW -> follow(player, goals);
 			case BUILD -> build(player, goals);
 			case SURVIVE -> survive(player, goals);
+			case FIGHT -> fight(player, goals);
+			case DIG -> dig(player, goals);
 		};
+	}
+
+	private static Action fight(LocalPlayer player, GoalManager goals) {
+		Player ally = WorldQuery.findPlayer(player, goals.targetName());
+		Monster threat = ally == null ? null : WorldQuery.nearestMonsterNear(player, ally, 8);
+		if (threat == null) {
+			threat = WorldQuery.nearestMonster(player, 8);
+		}
+		if (threat != null) {
+			if (player.distanceTo(threat) > 3.2) {
+				return Action.moveTo(threat.getX(), threat.getY(), threat.getZ());
+			}
+			return Action.attack(threat.getStringUUID());
+		}
+		if (ally == null) {
+			return goals.notice("fight-missing", "No nearby player to fight with.");
+		}
+		if (player.distanceTo(ally) > 4.5) {
+			return Action.moveTo(ally.getX(), ally.getY(), ally.getZ());
+		}
+		return Action.lookAt(ally.getX(), ally.getEyeY(), ally.getZ());
+	}
+
+	private static Action dig(LocalPlayer player, GoalManager goals) {
+		if (!goals.digPlanned()) {
+			goals.setDigQueue(tunnelAhead(player));
+		}
+		while (goals.hasDigWork()) {
+			BlockPos pos = goals.currentDigBlock();
+			BlockState state = player.level().getBlockState(pos);
+			if (state.isAir() || state.liquid() || !state.isSolid()) {
+				goals.advanceDig();
+				continue;
+			}
+			int tool = WorldQuery.findHotbar(player, stack ->
+				stack.getItem() instanceof PickaxeItem || stack.getItem() instanceof ShovelItem);
+			if (tool < 0) {
+				Action missing = goals.notice("dig-tool", "No pickaxe or shovel in the hotbar. Dig stopped.");
+				goals.setGoal(GoalType.IDLE, "");
+				return missing.type() == Action.Type.SAY ? missing : Action.stop();
+			}
+			if (player.getInventory().selected != tool) {
+				return Action.hotbar(tool);
+			}
+			Vec3 center = Vec3.atCenterOf(pos);
+			if (WorldQuery.horizontalDistance(player, center.x, center.z) > PLACE_REACH) {
+				return Action.moveTo(center.x, pos.getY(), center.z);
+			}
+			return Action.breakBlock(pos);
+		}
+		Action done = goals.notice("dig-done", "Tunnel finished.");
+		goals.setGoal(GoalType.IDLE, "");
+		return done.type() == Action.Type.SAY ? done : Action.stop();
+	}
+
+	/**
+	 * 1x2 corridor ahead of the player: foot, then head, for {@link #DIG_LENGTH} steps.
+	 * Air, fluids, bedrock, barrier, and command blocks are left out.
+	 */
+	private static List<BlockPos> tunnelAhead(LocalPlayer player) {
+		Direction forward = player.getDirection();
+		BlockPos feet = player.blockPosition();
+		List<BlockPos> blocks = new ArrayList<>();
+		for (int step = 1; step <= DIG_LENGTH; step++) {
+			BlockPos foot = feet.relative(forward, step);
+			offerDig(player, blocks, foot);
+			offerDig(player, blocks, foot.above());
+		}
+		return blocks;
+	}
+
+	private static void offerDig(LocalPlayer player, List<BlockPos> blocks, BlockPos pos) {
+		BlockState state = player.level().getBlockState(pos);
+		if (state.isAir() || state.liquid()) {
+			return;
+		}
+		if (!state.getFluidState().isEmpty() && !state.isSolid()) {
+			return;
+		}
+		if (state.is(Blocks.BEDROCK) || state.is(Blocks.BARRIER)
+			|| state.is(Blocks.COMMAND_BLOCK)
+			|| state.is(Blocks.REPEATING_COMMAND_BLOCK)
+			|| state.is(Blocks.CHAIN_COMMAND_BLOCK)) {
+			return;
+		}
+		blocks.add(pos);
 	}
 
 	private static Action protect(LocalPlayer player, GoalManager goals) {

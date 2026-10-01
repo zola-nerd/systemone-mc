@@ -1,5 +1,6 @@
 package com.zolanerd.systemone_mc.client.action;
 
+import com.zolanerd.systemone_mc.SystemOneMc;
 import com.zolanerd.systemone_mc.client.goal.GoalPlanner;
 import com.zolanerd.systemone_mc.client.world.WorldQuery;
 import net.minecraft.client.Minecraft;
@@ -177,6 +178,6 @@ public final class ActionExecutor {
 		}
 		lastSay = message;
 		lastSayTime = now;
-		minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("[System One MC] " + message));
+		minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("[" + SystemOneMc.DISPLAY_NAME + "] " + message));
 	}
 }

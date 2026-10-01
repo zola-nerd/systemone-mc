@@ -1,5 +1,6 @@
 package com.zolanerd.systemone_mc.client;
 
+import com.zolanerd.systemone_mc.SystemOneMc;
 import com.zolanerd.systemone_mc.client.chat.SystemOneMcChat;
 import com.zolanerd.systemone_mc.client.config.SystemOneMcConfig;
 import com.zolanerd.systemone_mc.client.hud.SystemOneMcHud;
@@ -9,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class SystemOneMcClient implements ClientModInitializer {
-	public static final Logger LOGGER = LoggerFactory.getLogger("System One MC");
+	public static final Logger LOGGER = LoggerFactory.getLogger(SystemOneMc.DISPLAY_NAME);
 
 	@Override
 	public void onInitializeClient() {
@@ -18,6 +19,6 @@ public final class SystemOneMcClient implements ClientModInitializer {
 		SystemOneMcChat.register();
 		SystemOneMcHud.register();
 		SystemOneMcTick.register();
-		LOGGER.info("System One MC mod loaded");
+		LOGGER.info("{} mod loaded", SystemOneMc.DISPLAY_NAME);
 	}
 }

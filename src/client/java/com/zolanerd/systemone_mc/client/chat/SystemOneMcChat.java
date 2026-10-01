@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import java.util.Locale;
 
 /**
- * Chat lines that start with ".jev " (or the ".s1 " alias) stay on the client.
+ * Chat lines that start with ".jev " (or the ".s1 " / ".laya " aliases) stay on the client.
  * The same keywords the radial menu uses are matched here before any LLM sidecar is involved.
  */
 public final class SystemOneMcChat {
@@ -38,11 +38,11 @@ public final class SystemOneMcChat {
 
 	/**
 	 * @return the text after the prefix, or null when the line is not a client command.
-	 * ".jev " is checked first. ".s1 " is the same parser.
+	 * ".jev " is checked first. ".s1 " and ".laya " use the same parser.
 	 */
 	private static String commandBody(String trimmed) {
 		String lower = trimmed.toLowerCase(Locale.ROOT);
-		for (String prefix : new String[] {SystemOneMc.CHAT_PREFIX, SystemOneMc.CHAT_PREFIX_ALT}) {
+		for (String prefix : new String[] {SystemOneMc.CHAT_PREFIX, SystemOneMc.CHAT_PREFIX_ALT, SystemOneMc.CHAT_PREFIX_LAYA}) {
 			String bare = prefix.stripTrailing();
 			if (lower.equals(bare)) {
 				return "";
@@ -64,15 +64,21 @@ public final class SystemOneMcChat {
 		String args = parts.length > 1 ? parts[1].trim() : "";
 		GoalManager goals = GoalManager.get();
 		switch (command) {
-			case "protect", "follow", "build", "idle", "survive", "stop" -> {
+			case "protect", "follow", "build", "idle", "survive", "fight", "dig", "stop" -> {
 				GoalType type = GoalType.fromCommand(command);
-				goals.setGoal(type, args);
+				String target = switch (type) {
+					case PROTECT, FOLLOW, FIGHT -> args;
+					case BUILD, DIG, IDLE, SURVIVE, NONE -> "";
+				};
+				goals.setGoal(type, target);
 				feedback(withAi(switch (type) {
 					case PROTECT -> args.isEmpty() ? "Protecting the nearest player." : "Protecting " + args + ".";
 					case FOLLOW -> args.isEmpty() ? "Following the nearest player." : "Following " + args + ".";
 					case BUILD -> "Building a 5x5x3 dirt hut.";
 					case IDLE -> "Idling.";
 					case SURVIVE -> "Survive mode.";
+					case FIGHT -> args.isEmpty() ? "Fighting alongside the nearest player." : "Fighting alongside " + args + ".";
+					case DIG -> "Digging a forward 1x2 tunnel.";
 					case NONE -> "Stopped.";
 				}));
 			}
@@ -109,10 +115,10 @@ public final class SystemOneMcChat {
 		if (minecraft.gui == null) {
 			return;
 		}
-		minecraft.gui.getChat().addMessage(Component.literal("[System One MC] " + text));
+		minecraft.gui.getChat().addMessage(Component.literal("[" + SystemOneMc.DISPLAY_NAME + "] " + text));
 	}
 
 	private static String help() {
-		return "Commands: protect [name], follow [name], build, idle, survive, stop, ai on, ai off, settings.";
+		return "Commands: protect [name], follow [name], fight [name], build, dig, idle, survive, stop, ai on, ai off, settings.";
 	}
 }

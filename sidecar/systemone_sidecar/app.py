@@ -1,4 +1,4 @@
-"""System One MC sidecar.
+"""Laya (System One MC) sidecar.
 
 The Minecraft client POSTs a compact observation JSON to ``/v1/systemone``.
 Primary planner: local OpenAI-compatible LLM (Ollama by default). Thin
@@ -22,7 +22,7 @@ from fastapi import FastAPI
 from .llm import llm_config, plan_llm, probe_llm
 from .rules import plan_rules
 
-app = FastAPI(title="System One MC sidecar", version="1.1.0")
+app = FastAPI(title="Laya (System One MC) sidecar", version="1.1.0")
 
 
 @app.get("/health")

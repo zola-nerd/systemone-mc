@@ -1,5 +1,6 @@
 package com.zolanerd.systemone_mc.client.gui;
 
+import com.zolanerd.systemone_mc.SystemOneMc;
 import com.zolanerd.systemone_mc.client.chat.SystemOneMcChat;
 import com.zolanerd.systemone_mc.client.goal.GoalManager;
 import com.zolanerd.systemone_mc.client.goal.GoalType;
@@ -14,8 +15,8 @@ import net.minecraft.world.entity.player.Player;
 import java.util.List;
 
 /**
- * Goal wheel. Protect and follow open a nearby-player list and run on click.
- * Build, idle, and survive run on click with no confirm step.
+ * Goal wheel. Protect, follow, and fight open a nearby-player list and run on click.
+ * Build, idle, survive, and dig run on click with no confirm step.
  */
 public final class RadialMenuScreen extends Screen {
 	private enum Mode {
@@ -29,7 +30,7 @@ public final class RadialMenuScreen extends Screen {
 	private boolean noPlayers;
 
 	public RadialMenuScreen() {
-		super(Component.literal("System One MC goals"));
+		super(Component.literal(SystemOneMc.DISPLAY_NAME + " goals"));
 	}
 
 	@Override
@@ -49,9 +50,13 @@ public final class RadialMenuScreen extends Screen {
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 		graphics.fill(0, 0, this.width, this.height, 0x88000000);
 		super.render(graphics, mouseX, mouseY, partialTick);
-		graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 118, 0xFFFFFF);
+		graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 128, 0xFFFFFF);
 		if (mode == Mode.PLAYERS) {
-			String heading = pending == GoalType.FOLLOW ? "Follow a player" : "Protect a player";
+			String heading = switch (pending) {
+				case FOLLOW -> "Follow a player";
+				case FIGHT -> "Fight alongside";
+				case PROTECT, BUILD, IDLE, SURVIVE, DIG, NONE -> "Protect a player";
+			};
 			graphics.drawCenteredString(this.font, heading, this.width / 2, this.height / 2 - 96, 0xFFD27F);
 			if (noPlayers) {
 				graphics.drawCenteredString(this.font, "No nearby players", this.width / 2, this.height / 2 - 8, 0xFFAAAA);
@@ -74,9 +79,12 @@ public final class RadialMenuScreen extends Screen {
 	}
 
 	private void buildWheel() {
-		GoalType[] types = {GoalType.PROTECT, GoalType.FOLLOW, GoalType.BUILD, GoalType.IDLE, GoalType.SURVIVE};
-		String[] labels = {"Protect", "Follow", "Build", "Idle", "Survive"};
-		int radius = 86;
+		GoalType[] types = {
+			GoalType.PROTECT, GoalType.FOLLOW, GoalType.BUILD, GoalType.IDLE,
+			GoalType.SURVIVE, GoalType.FIGHT, GoalType.DIG
+		};
+		String[] labels = {"Protect", "Follow", "Build", "Idle", "Survive", "Fight", "Dig"};
+		int radius = 100;
 		for (int i = 0; i < types.length; i++) {
 			double angle = -Math.PI / 2.0 + i * (Math.PI * 2.0 / types.length);
 			int x = this.width / 2 + (int) Math.round(Math.cos(angle) * radius) - 40;
@@ -114,7 +122,7 @@ public final class RadialMenuScreen extends Screen {
 	}
 
 	private void choose(GoalType type) {
-		if (type == GoalType.PROTECT || type == GoalType.FOLLOW) {
+		if (type == GoalType.PROTECT || type == GoalType.FOLLOW || type == GoalType.FIGHT) {
 			pending = type;
 			mode = Mode.PLAYERS;
 			needsRebuild = true;
@@ -125,14 +133,21 @@ public final class RadialMenuScreen extends Screen {
 			case BUILD -> "Building a 5x5x3 dirt hut.";
 			case IDLE -> "Idling.";
 			case SURVIVE -> "Survive mode.";
-			default -> "Goal set.";
+			case DIG -> "Digging a forward 1x2 tunnel.";
+			case PROTECT, FOLLOW, FIGHT, NONE -> "Goal set.";
 		}));
 		this.onClose();
 	}
 
 	private void pick(String name) {
 		GoalManager.get().setGoal(pending, name);
-		SystemOneMcChat.feedback(SystemOneMcChat.withAi((pending == GoalType.FOLLOW ? "Following " : "Protecting ") + name + "."));
+		String line = switch (pending) {
+			case FOLLOW -> "Following " + name + ".";
+			case FIGHT -> "Fighting alongside " + name + ".";
+			case PROTECT -> "Protecting " + name + ".";
+			case BUILD, IDLE, SURVIVE, DIG, NONE -> "Goal set.";
+		};
+		SystemOneMcChat.feedback(SystemOneMcChat.withAi(line));
 		this.onClose();
 	}
 }

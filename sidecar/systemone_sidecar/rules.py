@@ -78,6 +78,41 @@ def _nearest_hostile(obs: dict, max_dist: float) -> dict | None:
     return best
 
 
+def _dist_between(a: dict, b: dict) -> float:
+    return math.dist(
+        (_num(a, "x"), _num(a, "y"), _num(a, "z")),
+        (_num(b, "x"), _num(b, "y"), _num(b, "z")),
+    )
+
+
+def _nearest_hostile_around(obs: dict, focus: dict | None, max_dist: float) -> dict | None:
+    """Hostile closest to focus when it has coordinates, else closest to self."""
+    if focus is None or not _has_coords(focus):
+        return _nearest_hostile(obs, max_dist)
+    best = None
+    best_d = max_dist
+    for entity in _entities(obs):
+        if not _is_hostile(entity) or not _has_coords(entity):
+            continue
+        distance = _dist_between(focus, entity)
+        if distance <= best_d:
+            best = entity
+            best_d = distance
+    return best
+
+
+def _engage(threat: dict) -> dict:
+    distance = _num(threat, "dist", 999.0)
+    entity_id = str(threat.get("id") or "").strip()
+    if distance > 3.2 and _has_coords(threat):
+        return move_to(_num(threat, "x"), _num(threat, "y"), _num(threat, "z"))
+    if entity_id:
+        return attack(entity_id)
+    if _has_coords(threat):
+        return look_at(_num(threat, "x"), _num(threat, "y") + 1.0, _num(threat, "z"))
+    return stop()
+
+
 def _find_player(obs: dict, name: str) -> dict | None:
     if not name:
         # nearest other player
@@ -137,7 +172,8 @@ def plan_rules(observation: dict[str, Any]) -> dict:
     player = _player(observation)
     hotbar = _hotbar(observation)
 
-    if goal_type in {"build"}:
+    if goal_type in {"build", "dig"}:
+        # Java owns block placement and the 1x2 tunnel.
         return stop()
 
     if goal_type in {"idle", "none", "stop", ""}:
@@ -170,14 +206,9 @@ def plan_rules(observation: dict[str, Any]) -> dict:
     if goal_type == "protect":
         threat = _nearest_hostile(observation, 16.0)
         if threat is not None:
-            d = _num(threat, "dist", 999.0)
-            eid = str(threat.get("id") or "").strip()
-            if d > 3.2 and _has_coords(threat):
-                return move_to(_num(threat, "x"), _num(threat, "y"), _num(threat, "z"))
-            if eid:
-                return attack(eid)
-            if _has_coords(threat):
-                return look_at(_num(threat, "x"), _num(threat, "y") + 1.0, _num(threat, "z"))
+            action = _engage(threat)
+            if action.get("action") != "STOP":
+                return action
         ally = _find_player(observation, target_name)
         if ally is None:
             return stop()
@@ -187,6 +218,23 @@ def plan_rules(observation: dict[str, Any]) -> dict:
         if _has_coords(ally):
             return look_at(_num(ally, "x"), _num(ally, "y") + 1.6, _num(ally, "z"))
         return stop()
+
+    if goal_type == "fight":
+        # Hostiles near the ally first, then near self. Otherwise stay with the ally.
+        ally = _find_player(observation, target_name)
+        threat = _nearest_hostile_around(observation, ally, 8.0) if ally is not None else None
+        if threat is None:
+            threat = _nearest_hostile(observation, 8.0)
+        if threat is not None:
+            action = _engage(threat)
+            if action.get("action") != "STOP":
+                return action
+        if ally is None or not _has_coords(ally):
+            return stop()
+        d = _num(ally, "dist", 999.0)
+        if d > 4.5:
+            return move_to(_num(ally, "x"), _num(ally, "y"), _num(ally, "z"))
+        return look_at(_num(ally, "x"), _num(ally, "y") + 1.6, _num(ally, "z"))
 
     if goal_type == "follow":
         ally = _find_player(observation, target_name)

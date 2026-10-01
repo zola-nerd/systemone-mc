@@ -1,4 +1,4 @@
-"""Action helpers and validation for System One MC sidecar replies."""
+"""Action helpers and validation for Laya sidecar replies."""
 
 from __future__ import annotations
 

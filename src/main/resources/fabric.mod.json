@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "systemone_mc",
 	"version": "${version}",
-	"name": "System One MC",
-	"description": "Client-side goal companion. Keyword goals run locally. An optional HTTP sidecar can override them later.",
+	"name": "Laya (System One MC)",
+	"description": "Laya (System One MC): client-side keyword goals with an optional local AI sidecar.",
 	"authors": [
 		"zolanerd"
 	],

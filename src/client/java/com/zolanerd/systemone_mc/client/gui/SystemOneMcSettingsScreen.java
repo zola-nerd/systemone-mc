@@ -16,7 +16,7 @@ public final class SystemOneMcSettingsScreen extends Screen {
 	private String status = "Sidecar address. Empty falls back to the built-in dummy.";
 
 	public SystemOneMcSettingsScreen(Screen parent) {
-		super(Component.literal("System One MC settings"));
+		super(Component.literal(SystemOneMc.DISPLAY_NAME + " settings"));
 		this.parent = parent;
 	}
 

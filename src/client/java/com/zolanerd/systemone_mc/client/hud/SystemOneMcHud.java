@@ -1,5 +1,6 @@
 package com.zolanerd.systemone_mc.client.hud;
 
+import com.zolanerd.systemone_mc.SystemOneMc;
 import com.zolanerd.systemone_mc.client.goal.GoalManager;
 import com.zolanerd.systemone_mc.client.net.SidecarClient;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -26,7 +27,9 @@ public final class SystemOneMcHud {
 		boolean online = SidecarClient.online();
 		String ai = "AI: " + (goals.aiEnabled() ? "ON" : "OFF");
 		String goal = "Goal: " + goals.label();
-		String sidecar = online ? "System One MC: sidecar online" : "System One MC: sidecar offline (dummy)";
+		String sidecar = online
+			? SystemOneMc.DISPLAY_NAME + ": sidecar online"
+			: SystemOneMc.DISPLAY_NAME + ": sidecar offline (dummy)";
 		int width = Math.max(font.width(ai), Math.max(font.width(goal), font.width(sidecar)));
 		graphics.fill(2, 2, 10 + width, 38, 0x80000000);
 		graphics.drawString(font, ai, 6, 6, goals.aiEnabled() ? 0x55FF55 : 0xFF6666, false);

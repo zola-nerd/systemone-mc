@@ -19,6 +19,9 @@ public final class GoalManager {
 	private final List<BlockPos> buildQueue = new ArrayList<>();
 	private int buildIndex;
 	private boolean buildPlanned;
+	private final List<BlockPos> digQueue = new ArrayList<>();
+	private int digIndex;
+	private boolean digPlanned;
 	private int placeMisses;
 	private String noticeKey = "";
 
@@ -54,15 +57,9 @@ public final class GoalManager {
 		targetName = target == null ? "" : target.trim();
 		noticeKey = "";
 		placeMisses = 0;
-		if (goal != GoalType.BUILD) {
-			buildQueue.clear();
-			buildIndex = 0;
-			buildPlanned = false;
-		} else {
-			buildQueue.clear();
-			buildIndex = 0;
-			buildPlanned = false;
-		}
+		// Reset both plans on every set, including when re-entering BUILD or DIG.
+		clearBuild();
+		clearDig();
 	}
 
 	public String label() {
@@ -73,7 +70,21 @@ public final class GoalManager {
 			case BUILD -> "build";
 			case IDLE -> "idle";
 			case SURVIVE -> "survive";
+			case FIGHT -> targetName.isBlank() ? "fight" : "fight " + targetName;
+			case DIG -> "dig";
 		};
+	}
+
+	private void clearBuild() {
+		buildQueue.clear();
+		buildIndex = 0;
+		buildPlanned = false;
+	}
+
+	private void clearDig() {
+		digQueue.clear();
+		digIndex = 0;
+		digPlanned = false;
 	}
 
 	public void setBuildQueue(List<BlockPos> blocks) {
@@ -128,6 +139,46 @@ public final class GoalManager {
 
 	public List<BlockPos> buildQueueView() {
 		return Collections.unmodifiableList(buildQueue);
+	}
+
+	public void setDigQueue(List<BlockPos> blocks) {
+		digQueue.clear();
+		digQueue.addAll(blocks);
+		digIndex = 0;
+		digPlanned = true;
+	}
+
+	public boolean digPlanned() {
+		return digPlanned;
+	}
+
+	public boolean hasDigWork() {
+		return digIndex < digQueue.size();
+	}
+
+	public BlockPos currentDigBlock() {
+		if (!hasDigWork()) {
+			return null;
+		}
+		return digQueue.get(digIndex);
+	}
+
+	public void advanceDig() {
+		if (digIndex < digQueue.size()) {
+			digIndex++;
+		}
+	}
+
+	public int digRemaining() {
+		return Math.max(0, digQueue.size() - digIndex);
+	}
+
+	public int digTotal() {
+		return digQueue.size();
+	}
+
+	public List<BlockPos> digQueueView() {
+		return Collections.unmodifiableList(digQueue);
 	}
 
 	/**
